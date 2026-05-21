@@ -2,8 +2,6 @@
     include "header.php";
     include "connection.php";
 
-$sql = "SELECT * FROM product";
-$result = mysqli_query($conn, $sql);
 $message = ""; // This will hold our UI alerts
 
 if (isset($_POST['submit'])) 
@@ -16,21 +14,20 @@ if (isset($_POST['submit']))
     $unitsale = (int)$_POST['unitsale'];
     
     if($unitsale <= 0) {
-         $message = "<div class='alert alert-warning m-3'>Please enter a valid amount to sell.</div>";
+         $message = "<div class='alert alert-warning m-3'><strong>Notice:</strong> Please enter a valid quantity greater than zero.</div>";
     }
     elseif($unit >= $unitsale)
     {
         $totalprice = $unitprice * $unitsale;
         $u_unit = $unit - $unitsale;
 
-        $insertsql = "INSERT INTO sales(name, sellunit, totalprice, productid) VALUES ('$name', '$unitsale', '$totalprice','$id')";
-        $update_quantity_query = "UPDATE `product` SET unit = '$u_unit'  WHERE id = '$id'";
+        // FIXED: We explicitly inject NOW() into created_at so the database is forced to stamp it in Philippine Time
+        $insertsql = "INSERT INTO sales(name, sellunit, totalprice, productid, created_at) VALUES ('$name', '$unitsale', '$totalprice', '$id', NOW())";
+        $update_quantity_query = "UPDATE `product` SET unit = '$u_unit' WHERE id = '$id'";
 
         if ($conn->query($insertsql) === TRUE && $conn->query($update_quantity_query) === TRUE) 
         {
-            $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Sold $unitsale units of $name.</div>";
-            // Refresh the table data so it immediately shows the new stock count
-            $result = mysqli_query($conn, $sql); 
+            $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Sold $unitsale units of $name. The transaction has been permanently logged.</div>";
         } 
         else 
         {
@@ -39,62 +36,74 @@ if (isset($_POST['submit']))
     }
     else
     {
-        $message = "<div class='alert alert-danger m-3'><strong>Failed!</strong> Not enough stock. (Available: $unit)</div>";
+        $message = "<div class='alert alert-danger m-3'><strong>Failed!</strong> Not enough stock available. (Current Stock: $unit)</div>";
     }
 }
+
+// Fetch fresh data after any transactions
+$sql = "SELECT * FROM product";
+$result = mysqli_query($conn, $sql);
 ?>
-<?php echo $message; ?>
-<html>
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title></title>
+    <title>Outbound Sales</title>
 </head>
 <body>
-    <div class="container">
-    <h5>Sales</h5>
-    <table class="table table-striped">
+    <?php if(!empty($message)) echo $message; ?>
+
+    <div class="container table-wrapper">
+    <h5>Outbound / Sales</h5>
+    <table class="table align-middle">
   <thead>
     <tr>
-      <!--<th scope="col">#</th>-->
-      <th scope="col">Product Name</th>
-      <th scope="col">Description</th>
-      <th scope="col">Unit</th>
-      <th scope="col">Unit Price</th>
-      <th scope="col">Sell Unit</th>
-      <th scope="col">Action</th>
+      <th scope="col" style="width: 25%;">Product Name</th>
+      <th scope="col" style="width: 25%;">Description</th>
+      <th scope="col" style="width: 15%;">Stock Level</th>
+      <th scope="col" style="width: 15%;">Unit Price</th>
+      <th scope="col" style="width: 20%;">Execute Sale</th>
     </tr>
   </thead>
   <tbody>
    
       <?php
           if (mysqli_num_rows($result) > 0) {
-            // output data of each row
             while($row = mysqli_fetch_assoc($result)) {
+              // Smart UI Logic: Check if out of stock
+              $is_empty = ($row['unit'] <= 0);
+              $row_class = $is_empty ? "table-danger" : ""; 
               ?>
-             <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="post">
-               <tr>
-               <input type="hidden" name="id"  value="<?php echo $row['id'];?>">
-                <input type="hidden" name="name"  value="<?php echo $row['name'];?>">
-                <input type="hidden" name="des"  value="<?php echo $row['des'];?>">
-               <input type="hidden" name="unit"  value="<?php echo $row['unit'];?>">
-                <input type="hidden" name="unitprice"  value="<?php echo $row['unitprice'];?>">
+               <tr class="<?php echo $row_class; ?>">
                 <td><?php echo $row['name'];?></td>
                 <td><?php echo $row['des'];?></td>
-                <td><?php echo $row['unit'];?></td>
-                <td><?php echo $row['unitprice'];?></td>
-                <td><div class="mb-3">
-                    <input type="number" name="unitsale" class="form-control" id="exampleInputUnit">
-               </div></td>
-                <td><button type="submit" class="btn btn-primary" name="submit">Sell Now</button></td>
+                <td>
+                    <span class="fs-5 <?php echo $is_empty ? 'text-danger fw-bold' : ''; ?>">
+                        <?php echo $row['unit'];?>
+                    </span>
+                    <?php if($is_empty): ?><br><small class="text-danger fw-bold">OUT OF STOCK</small><?php endif; ?>
+                </td>
+                <td>₱<?php echo number_format($row['unitprice'], 2);?></td>
+                <td>
+                  <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="post" class="d-flex gap-2 m-0" onsubmit="return confirm('Confirm sale of ' + this.unitsale.value + ' units of <?php echo addslashes($row['name']); ?>?');">
+                        <input type="hidden" name="id" value="<?php echo $row['id'];?>">
+                        <input type="hidden" name="name" value="<?php echo $row['name'];?>">
+                        <input type="hidden" name="unit" value="<?php echo $row['unit'];?>">
+                        <input type="hidden" name="unitprice" value="<?php echo $row['unitprice'];?>">
+                        
+                        <input type="number" name="unitsale" class="form-control form-control-sm" style="width: 80px;" placeholder="Qty" min="1" max="<?php echo $row['unit'];?>" <?php echo $is_empty ? 'disabled' : 'required'; ?>>
+                        
+                        <button type="submit" class="btn btn-primary btn-sm" name="submit" <?php echo $is_empty ? 'disabled' : ''; ?>>
+                            Sell Now
+                        </button>
+                  </form>
+                </td>
                 </tr>
-                </form>
                 <?php }
         } else {
-            echo "0 results";
+            echo "<tr><td colspan='5'>0 results available inside the inventory.</td></tr>";
         }
         ?>
-      
-
-    
   </tbody>
 </table>
 </div>
