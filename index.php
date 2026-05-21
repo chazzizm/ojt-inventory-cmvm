@@ -8,12 +8,29 @@ if(isset($_POST['update_btn'])){
   $update_id = (int)$_POST['update_id'];
   $name = mysqli_real_escape_string($conn, $_POST['update_name']);
   $des = mysqli_real_escape_string($conn, $_POST['update_des']);
-  $unit = (int)$_POST['update_unit'];
+  $new_unit = (int)$_POST['update_unit'];
   $unitprice = (int)$_POST['update_unitprice'];
   
-  $update_query = mysqli_query($conn, "UPDATE `product` SET unitprice = '$unitprice' , name='$name' , des='$des' ,unit='$unit'  WHERE id = '$update_id'");
+  // STEP 1: Get the current stock level before we overwrite it
+  $check_sql = mysqli_query($conn, "SELECT unit FROM `product` WHERE id = '$update_id'");
+  $current_data = mysqli_fetch_assoc($check_sql);
+  $old_unit = (int)$current_data['unit'];
+
+  // STEP 2: Update the main product table
+  $update_query = mysqli_query($conn, "UPDATE `product` SET unitprice = '$unitprice', name='$name', des='$des', unit='$new_unit' WHERE id = '$update_id'");
+  
   if($update_query){
-      $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Product details and stock levels have been updated.</div>";
+      // STEP 3: Check if stock was added, and log it to the purchase table!
+      if ($new_unit > $old_unit) {
+          $added_stock = $new_unit - $old_unit;
+          mysqli_query($conn, "INSERT INTO purchase(name, des, unit, unitprice) VALUES ('$name', '$des', '$added_stock', '$unitprice')");
+          $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Details updated and <strong>$added_stock new units</strong> were automatically logged to the Purchase Report.</div>";
+      } elseif ($new_unit < $old_unit) {
+          $deducted = $old_unit - $new_unit;
+          $message = "<div class='alert alert-warning m-3'><strong>Notice:</strong> Stock was manually reduced by $deducted units (Inventory Adjustment).</div>";
+      } else {
+          $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Product details have been updated.</div>";
+      }
   } else {
       $message = "<div class='alert alert-danger m-3'><strong>Error:</strong> Failed to update product details. " . mysqli_error($conn) . "</div>";
   }
@@ -91,28 +108,21 @@ $result = $conn -> query ($sql);
 <script>
 function checkChanges(button) {
     let changed = false;
-    
-    // Instead of looking at the broken form, we find the exact table row (tr) you clicked
     let row = button.closest('tr');
-    
-    // Target all text and number fields within that specific row
     let inputs = row.querySelectorAll('input[type="text"], input[type="number"]');
     
-    // Check if the current typed value is different from the original database value
     for (let i = 0; i < inputs.length; i++) {
         if (inputs[i].value !== inputs[i].defaultValue) {
             changed = true;
-            break; // Stop checking once we find at least one change
+            break; 
         }
     }
 
-    // If nothing changed, popup the warning and cancel the form submission
     if (!changed) {
         alert("No edits were detected. The product details are already up to date.");
         return false; 
     }
 
-    // If changes were found, proceed to the final confirmation prompt
     return confirm('Are you sure you want to commit these changes to the live database?');
 }
 </script>
