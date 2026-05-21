@@ -5,15 +5,21 @@
  $message = ""; 
  $result = null;
 
+ // Setup sticky variables
+ $raw_start = isset($_POST['starttime']) ? $_POST['starttime'] : '';
+ $raw_end = isset($_POST['endtime']) ? $_POST['endtime'] : '';
+
 if (isset($_POST['submit'])) 
 {
-    $starttime = $_POST['starttime'];
-    $endtime = $_POST['endtime'];
-
-    if(empty($starttime) || empty($endtime)) {
-        $message = "<div class='alert alert-warning m-3'><strong>Missing Boundaries!</strong> Please enter both a start date and an end date before requesting a transaction query filter.</div>";
+    if(empty($raw_start) || empty($raw_end)) {
+        $message = "<div class='alert alert-warning m-3'><strong>Missing Boundaries!</strong> Please enter both a start date and an end date.</div>";
     } else {
-        $sql = "SELECT * FROM sales where created_at>='$starttime' && created_at<'$endtime' ORDER BY created_at DESC";
+        // FIXED: Force the Start Time to 00 seconds, and End Time to 59 seconds so nothing gets missed!
+        $starttime = date('Y-m-d H:i:00', strtotime($raw_start));
+        $endtime = date('Y-m-d H:i:59', strtotime($raw_end));
+
+        // FIXED: Changed '<' to '<=' to include the final minute
+        $sql = "SELECT * FROM sales WHERE created_at >= '$starttime' AND created_at <= '$endtime' ORDER BY created_at DESC";
         $result = $conn -> query ($sql);
     }
 }
@@ -29,10 +35,11 @@ if (isset($_POST['submit']))
 <div class="container table-wrapper">
 <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" class="mb-4">
   <label for="starttime" class="form-label">Start (date and time):</label>
-  <input type="datetime-local" id="starttime" name="starttime" class="form-control d-inline-block w-auto me-2">
+  <input type="datetime-local" id="starttime" name="starttime" class="form-control d-inline-block w-auto me-2" value="<?php echo $raw_start; ?>">
 
   <label for="endtime" class="form-label">End (date and time):</label>
-  <input type="datetime-local" id="endtime" name="endtime" class="form-control d-inline-block w-auto me-2">
+  <input type="datetime-local" id="endtime" name="endtime" class="form-control d-inline-block w-auto me-2" value="<?php echo $raw_end; ?>">
+  
   <input type="submit" name="submit" class="btn btn-primary">
 </form>
 <button type="button" class="btn btn-secondary mb-3" onclick="window.print();return false;"><i class="fas fa-file-pdf"></i> Pdf Report</button>
@@ -49,14 +56,12 @@ if (isset($_POST['submit']))
   </thead>
   <tbody>
   <?php
-   if(isset($_POST['submit']) && !empty($starttime) && !empty($endtime) && $result)
+   if(isset($_POST['submit']) && !empty($raw_start) && !empty($raw_end) && $result)
    {
           $t=0;
           if (mysqli_num_rows($result) > 0) {
             while($row = mysqli_fetch_assoc($result)) {
                     $t=$t+$row["totalprice"];
-                    
-                    // Format the timestamp
                     $formatted_date = date("M d, Y - h:i A", strtotime($row['created_at']));
               ?>
     <tr>

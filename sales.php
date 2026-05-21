@@ -2,11 +2,10 @@
     include "header.php";
     include "connection.php";
 
-$message = ""; // This will hold our UI alerts
+$message = ""; 
 
 if (isset($_POST['submit'])) 
 {
-    // Force strict integers for Ubuntu MySQL
     $id = (int)$_POST['id'];
     $name = mysqli_real_escape_string($conn, $_POST['name']);
     $unit = (int)$_POST['unit'];
@@ -14,15 +13,15 @@ if (isset($_POST['submit']))
     $unitsale = (int)$_POST['unitsale'];
     
     if($unitsale <= 0) {
-         $message = "<div class='alert alert-warning m-3'><strong>Notice:</strong> Please enter a valid quantity greater than zero.</div>";
+         $message = "<div class='alert alert-warning m-3'><strong>Notice:</strong> Please enter a valid quantity.</div>";
     }
     elseif($unit >= $unitsale)
     {
         $totalprice = $unitprice * $unitsale;
         $u_unit = $unit - $unitsale;
 
-        // FIXED: We explicitly inject NOW() into created_at so the database is forced to stamp it in Philippine Time
-        $insertsql = "INSERT INTO sales(name, sellunit, totalprice, productid, created_at) VALUES ('$name', '$unitsale', '$totalprice', '$id', NOW())";
+        // FIXED: Removed the forced 'created_at' to let the DB handle it natively like in purchase.php
+        $insertsql = "INSERT INTO sales(name, sellunit, totalprice, productid) VALUES ('$name', '$unitsale', '$totalprice', '$id')";
         $update_quantity_query = "UPDATE `product` SET unit = '$u_unit' WHERE id = '$id'";
 
         if ($conn->query($insertsql) === TRUE && $conn->query($update_quantity_query) === TRUE) 
@@ -36,11 +35,10 @@ if (isset($_POST['submit']))
     }
     else
     {
-        $message = "<div class='alert alert-danger m-3'><strong>Failed!</strong> Not enough stock available. (Current Stock: $unit)</div>";
+        $message = "<div class='alert alert-danger m-3'><strong>Failed!</strong> Not enough stock available.</div>";
     }
 }
 
-// Fetch fresh data after any transactions
 $sql = "SELECT * FROM product";
 $result = mysqli_query($conn, $sql);
 ?>
@@ -66,11 +64,9 @@ $result = mysqli_query($conn, $sql);
     </tr>
   </thead>
   <tbody>
-   
       <?php
           if (mysqli_num_rows($result) > 0) {
             while($row = mysqli_fetch_assoc($result)) {
-              // Smart UI Logic: Check if out of stock
               $is_empty = ($row['unit'] <= 0);
               $row_class = $is_empty ? "table-danger" : ""; 
               ?>
@@ -90,12 +86,8 @@ $result = mysqli_query($conn, $sql);
                         <input type="hidden" name="name" value="<?php echo $row['name'];?>">
                         <input type="hidden" name="unit" value="<?php echo $row['unit'];?>">
                         <input type="hidden" name="unitprice" value="<?php echo $row['unitprice'];?>">
-                        
                         <input type="number" name="unitsale" class="form-control form-control-sm" style="width: 80px;" placeholder="Qty" min="1" max="<?php echo $row['unit'];?>" <?php echo $is_empty ? 'disabled' : 'required'; ?>>
-                        
-                        <button type="submit" class="btn btn-primary btn-sm" name="submit" <?php echo $is_empty ? 'disabled' : ''; ?>>
-                            Sell Now
-                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm" name="submit" <?php echo $is_empty ? 'disabled' : ''; ?>>Sell Now</button>
                   </form>
                 </td>
                 </tr>
