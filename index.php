@@ -30,15 +30,14 @@ if(isset($_GET['remove'])){
 
 <html>
 <head>
-    <title></title>
+    <title>Stock Status</title>
 </head>
 <body>
-    <div class="container">
+    <div class="container table-wrapper">
     <h5>Stock Status</h5>
     <table class="table table-striped">
   <thead>
     <tr>
-      <!--<th scope="col">#</th>-->
       <th scope="col">Product Name</th>
       <th scope="col">Description</th>
       <th scope="col">Unit</th>
@@ -53,7 +52,7 @@ if(isset($_GET['remove'])){
             // output data of each row
             while($row = mysqli_fetch_assoc($result)) {
               ?>
-             <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
+              <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return confirm('Are you sure you want to update this product\'s details and stock level?');">
                <tr>
                 <input type="hidden" name="update_id"  value="<?php echo $row['id'];?>">
                 <td><input type="text" name="update_name"  value="<?php echo $row['name'];?>"></td>
@@ -61,12 +60,12 @@ if(isset($_GET['remove'])){
                 <td><input type="number" name="update_unit"  value="<?php echo $row['unit'];?>"></td>
                 <td><input type="number" name="update_unitprice"  value="<?php echo $row['unitprice'];?>"></td>
                 <td><button type="submit" class="btn btn-primary" name="update_btn">update</button></td>
-                <td><a  class="btn btn-primary" href="index.php?remove=<?php echo $row['id']; ?>">delete</a></td>
+                <td><a  class="btn btn-danger" href="index.php?remove=<?php echo $row['id']; ?>" onclick="return confirm('CRITICAL WARNING: Are you sure you want to permanently delete this product from the live database?');">delete</a></td>
                 </tr>
                 </form>
                 <?php }
         } else {
-            echo "0 results";
+            echo "<tr><td colspan='5'>0 results</td></tr>";
         }
         ?>
       

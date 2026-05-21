@@ -19,24 +19,23 @@ $res = $conn -> query ($sql);
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Purchase Report</title>
 </head>
 <body>
-<div class="container">
-<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
-  <label for="starttime">Start (date and time):</label>
-  <input type="datetime-local" id="starttime" name="starttime">
+<div class="container table-wrapper">
+<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" class="mb-4">
+  <label for="starttime" class="form-label">Start (date and time):</label>
+  <input type="datetime-local" id="starttime" name="starttime" class="form-control d-inline-block w-auto me-2">
 
-  <label for="endtime"> End (date and time):</label>
-  <input type="datetime-local" id="endtime" name="endtime">
-  <input type="submit" name="submit">
+  <label for="endtime" class="form-label">End (date and time):</label>
+  <input type="datetime-local" id="endtime" name="endtime" class="form-control d-inline-block w-auto me-2">
+  <input type="submit" name="submit" class="btn btn-primary">
 </form>
-<button type="button" onclick="window.print();return false;">Pdf Report</button>
+<button type="button" class="btn btn-secondary mb-3" onclick="window.print();return false;"><i class="fas fa-file-pdf"></i> Print PDF Report</button>
 <h5>Purchase Report</h5>
 <table class="table table-striped">
   <thead>
     <tr>
-      <!--<th scope="col">#</th>-->
       <th scope="col">Product Name</th>
       <th scope="col">Unit</th>
       <th scope="col">Total Unit Price</th>
@@ -47,29 +46,29 @@ $res = $conn -> query ($sql);
  if(isset($_POST['submit']))
  {
           if (mysqli_num_rows($res) > 0) {
-            // output data of each row
             while($row = mysqli_fetch_assoc($res)) {
-                $t=$t+($row['unit']*$row['unitprice']);
+                $row_total = $row['unit'] * $row['unitprice'];
+                $t = $t + $row_total;
               ?>
                <tr>
                 <td><?php echo $row['name'];?></td>
                 <td><?php echo $row['unit'];?></td>
-                <td><?php echo $row['unit']*$row['unitprice'];?></td>
-
-                </tr>
-                </form>
+                <td>₱<?php echo number_format($row_total, 2);?></td>
+               </tr>
                 <?php
                  }
         } 
         else 
         {
-            echo "0 results";
+            echo "<tr><td colspan='3'>0 results</td></tr>";
         }
     }
         ?>
     </tbody>
 </table>
-<?php echo "Total= " . $t ." Taka";?>
+<div class="h5 mt-3 text-end">
+    <strong>Total: ₱<?php echo number_format($t, 2); ?></strong>
+</div>
 </div>
 </body>
 </html>
