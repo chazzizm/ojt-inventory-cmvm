@@ -2,7 +2,7 @@
  include 'header.php';
  include 'connection.php';
  $t=0;
- $message = ""; // Error tracking element configuration
+ $message = ""; 
  $result = null;
 
 if (isset($_POST['submit'])) 
@@ -10,11 +10,10 @@ if (isset($_POST['submit']))
     $starttime = $_POST['starttime'];
     $endtime = $_POST['endtime'];
 
-    // Safeguard database execution structure against empty elements
     if(empty($starttime) || empty($endtime)) {
         $message = "<div class='alert alert-warning m-3'><strong>Missing Boundaries!</strong> Please enter both a start date and an end date before requesting a transaction query filter.</div>";
     } else {
-        $sql = "SELECT * FROM sales where created_at>='$starttime' && created_at<'$endtime'";
+        $sql = "SELECT * FROM sales where created_at>='$starttime' && created_at<'$endtime' ORDER BY created_at DESC";
         $result = $conn -> query ($sql);
     }
 }
@@ -39,12 +38,13 @@ if (isset($_POST['submit']))
 <button type="button" class="btn btn-secondary mb-3" onclick="window.print();return false;"><i class="fas fa-file-pdf"></i> Pdf Report</button>
 <div class="container pendingbody">
   <h5>Sales Report</h5>
-<table class="table table-striped">
+<table class="table table-striped align-middle">
   <thead>
     <tr>
+      <th scope="col">Date & Time</th>
       <th scope="col">Name</th>
-      <th scope="col">Unit</th>
-      <th scope="col">Total</th>
+      <th scope="col">Units Sold</th>
+      <th scope="col">Total Earnings</th>
     </tr>
   </thead>
   <tbody>
@@ -55,8 +55,12 @@ if (isset($_POST['submit']))
           if (mysqli_num_rows($result) > 0) {
             while($row = mysqli_fetch_assoc($result)) {
                     $t=$t+$row["totalprice"];
+                    
+                    // Format the timestamp
+                    $formatted_date = date("M d, Y - h:i A", strtotime($row['created_at']));
               ?>
     <tr>
+      <td><span class="badge bg-secondary"><?php echo $formatted_date; ?></span></td>
       <td><?php echo $row["name"] ?></td>
       <td><?php echo $row["sellunit"] ?></td>
       <td>₱<?php echo number_format($row["totalprice"], 2) ?></td>
@@ -65,7 +69,7 @@ if (isset($_POST['submit']))
     }
         } 
         else {
-            echo "<tr><td colspan='3'>0 results matches the chosen date constraints.</td></tr>";
+            echo "<tr><td colspan='4'>0 results matches the chosen date constraints.</td></tr>";
         }
     }
         ?>

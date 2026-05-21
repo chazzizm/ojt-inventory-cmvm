@@ -10,11 +10,10 @@ if (isset($_POST['submit']))
     $starttime = $_POST['starttime'];
     $endtime = $_POST['endtime'];
 
-    // Check if the user completely blanked out the field values
     if(empty($starttime) || empty($endtime)) {
         $message = "<div class='alert alert-warning m-3'><strong>Missing Boundaries!</strong> Please enter both a start date and an end date before requesting a transaction query filter.</div>";
     } else {
-        $sql = "SELECT * FROM purchase where created_at>='$starttime' && created_at<'$endtime'";
+        $sql = "SELECT * FROM purchase where created_at>='$starttime' && created_at<'$endtime' ORDER BY created_at DESC";
         $res = $conn -> query ($sql);
     }
 }
@@ -42,9 +41,10 @@ if (isset($_POST['submit']))
 </form>
 <button type="button" class="btn btn-secondary mb-3" onclick="window.print();return false;"><i class="fas fa-file-pdf"></i> Pdf Report</button>
 <h5>Purchase Report</h5>
-<table class="table table-striped">
+<table class="table table-striped align-middle">
   <thead>
     <tr>
+      <th scope="col">Date & Time</th>
       <th scope="col">Product Name</th>
       <th scope="col">Unit</th>
       <th scope="col">Total Unit Price</th>
@@ -52,15 +52,18 @@ if (isset($_POST['submit']))
   </thead>
   <tbody>
  <?php
- // Only evaluate results if the search criteria passed the validation constraints completely
  if(isset($_POST['submit']) && !empty($starttime) && !empty($endtime) && $res)
  {
           if (mysqli_num_rows($res) > 0) {
             while($row = mysqli_fetch_assoc($res)) {
                 $row_total = $row['unit'] * $row['unitprice'];
                 $t = $t + $row_total;
+                
+                // Format the raw database timestamp into a clean, readable format
+                $formatted_date = date("M d, Y - h:i A", strtotime($row['created_at']));
               ?>
                <tr>
+                <td><span class="badge bg-secondary"><?php echo $formatted_date; ?></span></td>
                 <td><?php echo $row['name'];?></td>
                 <td><?php echo $row['unit'];?></td>
                 <td>₱<?php echo number_format($row_total, 2);?></td>
@@ -70,7 +73,7 @@ if (isset($_POST['submit']))
         } 
         else 
         {
-            echo "<tr><td colspan='3'>0 results matches the chosen date constraints.</td></tr>";
+            echo "<tr><td colspan='4'>0 results matches the chosen date constraints.</td></tr>";
         }
     }
         ?>
