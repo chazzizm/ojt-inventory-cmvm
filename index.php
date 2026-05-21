@@ -2,30 +2,36 @@
     include "header.php";
     include "connection.php";
 
-$sql = "SELECT * FROM product";
-$result = $conn -> query ($sql);
-
+$message = ""; // Container for success/error alerts
 
 if(isset($_POST['update_btn'])){
-  $update_id = $_POST['update_id'];
-  $name = $_POST['update_name'];
-  $des = $_POST['update_des'];
-  $unit = $_POST['update_unit'];
-  $unitprice = $_POST['update_unitprice'];
+  $update_id = (int)$_POST['update_id'];
+  $name = mysqli_real_escape_string($conn, $_POST['update_name']);
+  $des = mysqli_real_escape_string($conn, $_POST['update_des']);
+  $unit = (int)$_POST['update_unit'];
+  $unitprice = (int)$_POST['update_unitprice'];
   
   $update_query = mysqli_query($conn, "UPDATE `product` SET unitprice = '$unitprice' , name='$name' , des='$des' ,unit='$unit'  WHERE id = '$update_id'");
   if($update_query){
-     header('location:index.php');
-  };
-};
+      $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Product details and stock levels have been updated.</div>";
+  } else {
+      $message = "<div class='alert alert-danger m-3'><strong>Error:</strong> Failed to update product details. " . mysqli_error($conn) . "</div>";
+  }
+}
 
 if(isset($_GET['remove'])){
-  $remove_id = $_GET['remove'];
-  mysqli_query($conn, "DELETE FROM `product` WHERE id = '$remove_id'");
-  header('location:index.php');
-};
+  $remove_id = (int)$_GET['remove'];
+  $delete_query = mysqli_query($conn, "DELETE FROM `product` WHERE id = '$remove_id'");
+  if($delete_query){
+      $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Product was permanently removed from the live stock database.</div>";
+  } else {
+      $message = "<div class='alert alert-danger m-3'><strong>Error:</strong> Failed to delete product. " . mysqli_error($conn) . "</div>";
+  }
+}
 
-
+// Fetch the fresh list after modifications
+$sql = "SELECT * FROM product";
+$result = $conn -> query ($sql);
 ?>
 
 <html>
@@ -33,6 +39,8 @@ if(isset($_GET['remove'])){
     <title>Stock Status</title>
 </head>
 <body>
+    <?php if(!empty($message)) echo $message; ?>
+
     <div class="container table-wrapper">
     <h5>Stock Status</h5>
     <table class="table table-striped">
@@ -49,10 +57,9 @@ if(isset($_GET['remove'])){
    
       <?php
           if (mysqli_num_rows($result) > 0) {
-            // output data of each row
             while($row = mysqli_fetch_assoc($result)) {
               ?>
-              <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return confirm('Are you sure you want to update this product\'s details and stock level?');">
+             <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return confirm('Are you sure you want to update this product\'s details and stock level?');">
                <tr>
                 <input type="hidden" name="update_id"  value="<?php echo $row['id'];?>">
                 <td><input type="text" name="update_name"  value="<?php echo $row['name'];?>"></td>
@@ -65,12 +72,9 @@ if(isset($_GET['remove'])){
                 </form>
                 <?php }
         } else {
-            echo "<tr><td colspan='5'>0 results</td></tr>";
+            echo "<tr><td colspan='5'>0 results available inside the inventory.</td></tr>";
         }
         ?>
-      
-
-    
   </tbody>
 </table>
 </div>

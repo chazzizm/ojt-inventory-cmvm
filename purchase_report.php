@@ -2,15 +2,22 @@
     include "header.php";
     include "connection.php";
     $t=0;
+    $message = ""; // Safe error reporting container
+    $res = null;
+
 if (isset($_POST['submit'])) 
 {
-    $starttime=$_POST['starttime'];
-    $endtime=$_POST['endtime'];
+    $starttime = $_POST['starttime'];
+    $endtime = $_POST['endtime'];
 
-$sql = "SELECT * FROM purchase where created_at>='$starttime' && created_at<'$endtime'";
-$res = $conn -> query ($sql);
+    // Check if the user completely blanked out the field values
+    if(empty($starttime) || empty($endtime)) {
+        $message = "<div class='alert alert-warning m-3'><strong>Missing Boundaries!</strong> Please enter both a start date and an end date before requesting a transaction query filter.</div>";
+    } else {
+        $sql = "SELECT * FROM purchase where created_at>='$starttime' && created_at<'$endtime'";
+        $res = $conn -> query ($sql);
+    }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -22,6 +29,8 @@ $res = $conn -> query ($sql);
     <title>Purchase Report</title>
 </head>
 <body>
+<?php if(!empty($message)) echo $message; ?>
+
 <div class="container table-wrapper">
 <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" class="mb-4">
   <label for="starttime" class="form-label">Start (date and time):</label>
@@ -31,7 +40,7 @@ $res = $conn -> query ($sql);
   <input type="datetime-local" id="endtime" name="endtime" class="form-control d-inline-block w-auto me-2">
   <input type="submit" name="submit" class="btn btn-primary">
 </form>
-<button type="button" class="btn btn-secondary mb-3" onclick="window.print();return false;"><i class="fas fa-file-pdf"></i> Print PDF Report</button>
+<button type="button" class="btn btn-secondary mb-3" onclick="window.print();return false;"><i class="fas fa-file-pdf"></i> Pdf Report</button>
 <h5>Purchase Report</h5>
 <table class="table table-striped">
   <thead>
@@ -43,7 +52,8 @@ $res = $conn -> query ($sql);
   </thead>
   <tbody>
  <?php
- if(isset($_POST['submit']))
+ // Only evaluate results if the search criteria passed the validation constraints completely
+ if(isset($_POST['submit']) && !empty($starttime) && !empty($endtime) && $res)
  {
           if (mysqli_num_rows($res) > 0) {
             while($row = mysqli_fetch_assoc($res)) {
@@ -60,7 +70,7 @@ $res = $conn -> query ($sql);
         } 
         else 
         {
-            echo "<tr><td colspan='3'>0 results</td></tr>";
+            echo "<tr><td colspan='3'>0 results matches the chosen date constraints.</td></tr>";
         }
     }
         ?>
