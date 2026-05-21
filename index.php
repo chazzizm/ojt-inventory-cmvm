@@ -59,7 +59,7 @@ $result = $conn -> query ($sql);
           if (mysqli_num_rows($result) > 0) {
             while($row = mysqli_fetch_assoc($result)) {
               ?>
-             <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return checkChanges(this);">
+             <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
                <tr>
                 <input type="hidden" name="update_id" value="<?php echo $row['id'];?>">
                 <td><input type="text" class="form-control" name="update_name" value="<?php echo $row['name'];?>"></td>
@@ -73,7 +73,7 @@ $result = $conn -> query ($sql);
                 </td>
                 <td>
                   <div class="d-flex gap-1">
-                    <button type="submit" class="btn btn-primary" name="update_btn">Update</button>
+                    <button type="submit" class="btn btn-primary" name="update_btn" onclick="return checkChanges(this);">Update</button>
                     <a class="btn btn-danger" href="index.php?remove=<?php echo $row['id']; ?>" onclick="return confirm('CRITICAL WARNING: Are you sure you want to permanently delete this product from the live database?');">Delete</a>
                   </div>
                 </td>
@@ -89,10 +89,14 @@ $result = $conn -> query ($sql);
 </div>
 
 <script>
-function checkChanges(form) {
+function checkChanges(button) {
     let changed = false;
-    // Target all text and number fields within the specific row the user clicked
-    let inputs = form.querySelectorAll('input[type="text"], input[type="number"]');
+    
+    // Instead of looking at the broken form, we find the exact table row (tr) you clicked
+    let row = button.closest('tr');
+    
+    // Target all text and number fields within that specific row
+    let inputs = row.querySelectorAll('input[type="text"], input[type="number"]');
     
     // Check if the current typed value is different from the original database value
     for (let i = 0; i < inputs.length; i++) {
