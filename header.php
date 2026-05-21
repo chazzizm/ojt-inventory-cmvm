@@ -33,6 +33,8 @@
   <a href="purchase_report.php"><i class="fas fa-file-invoice"></i> Purchase Logs</a>
   <a href="sales_report.php"><i class="fas fa-file-invoice-dollar"></i> Sales Logs</a>
   
+  <a href="adjustments_report.php"><i class="fas fa-sliders-h"></i> Adjustments Logs</a>
+  
   <div style="position: absolute; bottom: 30px; width: 100%;">
       <a href="logout.php" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Secure Logout</a>
   </div>
