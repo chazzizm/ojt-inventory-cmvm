@@ -2,38 +2,33 @@
     include "header.php";
     include "connection.php";
 
-    // Temporarily force Linux to show us any hidden errors
-    ini_set('display_errors', 1);
-    error_reporting(E_ALL);
+    $message = ""; // Safe feedback container
 
     if (isset($_POST['submit'])) 
     {
-        // Add protection and force strict integers for Ubuntu MySQL
+        // Protection & Type Casting for Ubuntu MySQL Strict Mode
         $name = mysqli_real_escape_string($conn, $_POST['name']);
         $des = mysqli_real_escape_string($conn, $_POST['des']);
-        $unit = (int)$_POST['unit']; 
+        $unit = (int)$_POST['unit'];
         $unitprice = (int)$_POST['unitprice'];
 
         $insertsql = "INSERT INTO product(name, des, unit, unitprice) VALUES ('$name', '$des', '$unit','$unitprice')";
         $insertsql1 = "INSERT INTO purchase(name, des, unit, unitprice) VALUES ('$name', '$des', '$unit','$unitprice')";
         
         $success = true;
-        $error_msg = "";
-
+        
         if (!$conn->query($insertsql1)) {
             $success = false;
-            $error_msg .= "Purchase Table Error: " . $conn->error . "<br>";
         }
         
         if (!$conn->query($insertsql)) {
             $success = false;
-            $error_msg .= "Product Table Error: " . $conn->error . "<br>";
         }
 
         if ($success) {
-            echo "<div class='alert alert-success m-3'><strong>Success!</strong> Item successfully added to live database.</div>";
+            $message = "<div class='alert alert-success m-3'><strong>Success!</strong> Brand new product successfully logged and added to inventory.</div>";
         } else {
-            echo "<div class='alert alert-danger m-3'><strong>Database Blocked It:</strong><br>$error_msg</div>";
+            $message = "<div class='alert alert-danger m-3'><strong>Database Error:</strong> " . $conn->error . "</div>";
         }
     } 
 ?>
@@ -41,33 +36,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Purchase Inbound</title>
 </head>
 <body>
-    <div class="container">
-        <h5>Purchase</h5>
+    <?php if(!empty($message)) echo $message; ?>
+
+    <div class="container table-wrapper" style="max-width: 600px; margin-top: 30px;">
+        <h5 class="mb-4"><i class="fas fa-cart-plus me-2"></i>Inbound Purchase / Restock</h5>
     <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
-  <div class="mb-3">
-    <label for="exampleInputName" class="form-label">Product Name</label>
-    <input type="text" name="name" class="form-control" id="exampleInputName">
-    
-  </div>
-  <div class="mb-3">
-    <label for="exampleInputDes" class="form-label">Description</label>
-    <input type="text" name="des" class="form-control" id="exampleInputDes">
-  </div>
-  <div class="mb-3">
-    <label for="exampleInputUnit" class="form-label">Unit</label>
-    <input type="number" name="unit" class="form-control" id="exampleInputUnit">
-  </div>
-  <div class="mb-3">
-    <label for="exampleInputUnitprice" class="form-label">Unit Price</label>
-    <input type="number" name="unitprice" class="form-control" id="exampleInputUnitprice">
-  </div>
-  <button type="submit" class="btn btn-primary" name="submit">Submit</button>
-</form>
+      <div class="mb-3">
+        <label class="form-label">Product Name</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g., Mechanical Keyboard" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <input type="text" name="des" class="form-control" placeholder="e.g., RGB Hot-swappable" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Initial Stock Units</label>
+        <input type="number" name="unit" class="form-control" placeholder="0" min="1" required>
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Unit Price</label>
+        <div class="input-group">
+            <span class="input-group-text">₱</span>
+            <input type="number" name="unitprice" class="form-control" placeholder="0.00" min="1" required>
+        </div>
+      </div>
+      <div class="d-grid">
+         <button type="submit" name="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-1"></i> Add Product into Database</button>
+      </div>
+    </form>
     </div>
 </body>
 </html>

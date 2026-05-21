@@ -43,14 +43,14 @@ $result = $conn -> query ($sql);
 
     <div class="container table-wrapper">
     <h5>Stock Status</h5>
-    <table class="table table-striped">
+    <table class="table table-striped align-middle">
   <thead>
     <tr>
-      <th scope="col">Product Name</th>
-      <th scope="col">Description</th>
-      <th scope="col">Unit</th>
-      <th scope="col">Unit Price</th>
-      <th scope="col">Action</th>
+      <th scope="col" style="width: 25%;">Product Name</th>
+      <th scope="col" style="width: 25%;">Description</th>
+      <th scope="col" style="width: 15%;">Unit</th>
+      <th scope="col" style="width: 20%;">Unit Price</th>
+      <th scope="col" style="width: 15%;">Action</th>
     </tr>
   </thead>
   <tbody>
@@ -62,12 +62,21 @@ $result = $conn -> query ($sql);
              <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return confirm('Are you sure you want to update this product\'s details and stock level?');">
                <tr>
                 <input type="hidden" name="update_id"  value="<?php echo $row['id'];?>">
-                <td><input type="text" name="update_name"  value="<?php echo $row['name'];?>"></td>
-                <td><input type="text" name="update_des"  value="<?php echo $row['des'];?>"></td>
-                <td><input type="number" name="update_unit"  value="<?php echo $row['unit'];?>"></td>
-                <td><input type="number" name="update_unitprice"  value="<?php echo $row['unitprice'];?>"></td>
-                <td><button type="submit" class="btn btn-primary" name="update_btn">update</button></td>
-                <td><a  class="btn btn-danger" href="index.php?remove=<?php echo $row['id']; ?>" onclick="return confirm('CRITICAL WARNING: Are you sure you want to permanently delete this product from the live database?');">delete</a></td>
+                <td><input type="text" class="form-control" name="update_name"  value="<?php echo $row['name'];?>"></td>
+                <td><input type="text" class="form-control" name="update_des"  value="<?php echo $row['des'];?>"></td>
+                <td><input type="number" class="form-control" name="update_unit"  value="<?php echo $row['unit'];?>"></td>
+                <td>
+                  <div class="input-group">
+                    <span class="input-group-text">₱</span>
+                    <input type="number" class="form-control" name="update_unitprice"  value="<?php echo $row['unitprice'];?>">
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button type="submit" class="btn btn-primary" name="update_btn">Update</button>
+                    <a class="btn btn-danger" href="index.php?remove=<?php echo $row['id']; ?>" onclick="return confirm('CRITICAL WARNING: Are you sure you want to permanently delete this product from the live database?');">Delete</a>
+                  </div>
+                </td>
                 </tr>
                 </form>
                 <?php }
