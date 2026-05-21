@@ -57,11 +57,11 @@
         <input type="number" name="unit" class="form-control" placeholder="0" min="1" required>
       </div>
       <div class="mb-4">
-        <label class="form-label">Unit Price</label>
-        <div class="input-group">
-            <span class="input-group-text">₱</span>
-            <input type="number" name="unitprice" class="form-control" placeholder="0.00" min="1" required>
-        </div>
+         <label class="form-label">Unit Price</label>
+      <div class="input-group">
+      <span class="input-group-text">₱</span>
+      <input type="number" name="unitprice" class="form-control" placeholder="0" min="1" required>
+      </div>
       </div>
       <div class="d-grid">
          <button type="submit" name="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-1"></i> Add Product into Database</button>
