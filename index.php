@@ -54,37 +54,63 @@ $result = $conn -> query ($sql);
     </tr>
   </thead>
   <tbody>
-  <?php
-      if (mysqli_num_rows($result) > 0) {
-        while($row = mysqli_fetch_assoc($result)) {
-          ?>
-         <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return confirm('Are you sure you want to update this product\'s details and stock level?');">
-           <tr>
-            <input type="hidden" name="update_id" value="<?php echo $row['id'];?>">
-            <td><input type="text" class="form-control" name="update_name" value="<?php echo $row['name'];?>"></td>
-            <td><input type="text" class="form-control" name="update_des" value="<?php echo $row['des'];?>"></td>
-            <td><input type="number" class="form-control" name="update_unit" value="<?php echo $row['unit'];?>"></td>
-            <td>
-              <div class="input-group">
-                <span class="input-group-text">₱</span>
-                <input type="number" class="form-control" name="update_unitprice" value="<?php echo $row['unitprice'];?>">
-              </div>
-            </td>
-            <td>
-              <div class="d-flex gap-1">
-                <button type="submit" class="btn btn-primary" name="update_btn">update</button>
-                <a class="btn btn-danger" href="index.php?remove=<?php echo $row['id']; ?>" onclick="return confirm('CRITICAL WARNING: Are you sure you want to permanently delete this product from the live database?');">delete</a>
-              </div>
-            </td>
-            </tr>
-         </form>
-         <?php }
-    } else {
-        echo "<tr><td colspan='5'>0 results available inside the inventory.</td></tr>";
-    }
-    ?>
-</tbody>
+   
+      <?php
+          if (mysqli_num_rows($result) > 0) {
+            while($row = mysqli_fetch_assoc($result)) {
+              ?>
+             <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return checkChanges(this);">
+               <tr>
+                <input type="hidden" name="update_id" value="<?php echo $row['id'];?>">
+                <td><input type="text" class="form-control" name="update_name" value="<?php echo $row['name'];?>"></td>
+                <td><input type="text" class="form-control" name="update_des" value="<?php echo $row['des'];?>"></td>
+                <td><input type="number" class="form-control" name="update_unit" value="<?php echo $row['unit'];?>"></td>
+                <td>
+                  <div class="input-group">
+                    <span class="input-group-text">₱</span>
+                    <input type="number" class="form-control" name="update_unitprice" value="<?php echo $row['unitprice'];?>">
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button type="submit" class="btn btn-primary" name="update_btn">Update</button>
+                    <a class="btn btn-danger" href="index.php?remove=<?php echo $row['id']; ?>" onclick="return confirm('CRITICAL WARNING: Are you sure you want to permanently delete this product from the live database?');">Delete</a>
+                  </div>
+                </td>
+                </tr>
+                </form>
+                <?php }
+        } else {
+            echo "<tr><td colspan='5'>0 results available inside the inventory.</td></tr>";
+        }
+        ?>
+  </tbody>
 </table>
 </div>
+
+<script>
+function checkChanges(form) {
+    let changed = false;
+    // Target all text and number fields within the specific row the user clicked
+    let inputs = form.querySelectorAll('input[type="text"], input[type="number"]');
+    
+    // Check if the current typed value is different from the original database value
+    for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i].value !== inputs[i].defaultValue) {
+            changed = true;
+            break; // Stop checking once we find at least one change
+        }
+    }
+
+    // If nothing changed, popup the warning and cancel the form submission
+    if (!changed) {
+        alert("No edits were detected. The product details are already up to date.");
+        return false; 
+    }
+
+    // If changes were found, proceed to the final confirmation prompt
+    return confirm('Are you sure you want to commit these changes to the live database?');
+}
+</script>
 </body>
 </html>
